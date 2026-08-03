@@ -1,0 +1,1084 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laboratorium AI Kecil</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            /* Background gradien modern yang lembut */
+            background-color: #f8fafc;
+            background-image: 
+                radial-gradient(at 0% 0%, hsla(253,16%,7%,0) 0, transparent 50%), 
+                radial-gradient(at 50% 0%, hsla(225,39%,30%,0) 0, transparent 50%), 
+                radial-gradient(at 100% 0%, hsla(339,49%,30%,0) 0, transparent 50%);
+            background-image: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);
+            -webkit-tap-highlight-color: transparent;
+            min-height: 100vh;
+        }
+
+        /* Glassmorphism utilities */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Custom Animations */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .anim-float {
+            animation: float 4s ease-in-out infinite;
+        }
+
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); }
+            70% { box-shadow: 0 0 0 15px rgba(99, 102, 241, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+        }
+
+        .anim-processing {
+            animation: pulse-glow 1.5s infinite;
+            border-color: #6366f1 !important;
+            background: linear-gradient(135deg, #eef2ff, #e0e7ff) !important;
+            transform: scale(1.08);
+            z-index: 10;
+        }
+
+        .anim-learned {
+            border-color: #10b981 !important;
+            background: linear-gradient(135deg, #ecfdf5, #d1fae5) !important;
+            transform: scale(1);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Modern Interactive Cards */
+        .selectable-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 3px solid transparent;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.9);
+        }
+        .selectable-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 15px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            border-color: rgba(99, 102, 241, 0.3);
+        }
+        .selectable-card.selected {
+            border-color: #6366f1;
+            background: #eef2ff;
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.3);
+        }
+        .selectable-card.selected::after {
+            content: '✨';
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            font-size: 1.5rem;
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .feature-chip {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid transparent;
+            background: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            cursor: pointer;
+        }
+        .feature-chip:hover {
+            transform: translateY(-2px);
+            background: #ffffff;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .feature-chip.selected {
+            border-color: #6366f1;
+            background: #6366f1;
+            color: #ffffff;
+            font-weight: 700;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+        }
+
+        /* Modern Gradient Text */
+        .text-gradient {
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-image: linear-gradient(90deg, #4f46e5, #9333ea);
+        }
+
+        /* Modern Buttons */
+        .btn-modern {
+            background-image: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 20px -10px rgba(99, 102, 241, 0.6);
+        }
+        .btn-modern:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 25px -10px rgba(99, 102, 241, 0.8);
+        }
+        .btn-modern:active {
+            transform: translateY(1px);
+        }
+    </style>
+</head>
+<body class="text-slate-800 h-screen flex flex-col overflow-hidden">
+
+    <div class="px-4 pt-4 pb-2 z-20 flex-shrink-0">
+        <header class="glass-panel max-w-4xl mx-auto rounded-3xl overflow-hidden shadow-lg">
+            <div class="px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
+                <h1 class="text-2xl md:text-3xl font-black text-gradient flex items-center gap-3">
+                    <span class="text-4xl anim-float inline-block">🧪</span> 
+                    Laboratorium AI Kecil
+                </h1>
+                
+                <!-- Navigation -->
+                <nav class="flex w-full md:w-auto bg-slate-100/50 p-1 rounded-2xl overflow-x-auto no-scrollbar">
+                    <button onclick="switchMode('home')" id="nav-home" class="nav-btn flex-1 md:flex-none px-4 py-2 rounded-xl text-sm font-bold text-slate-500 hover:text-indigo-600 hover:bg-white/50 transition-all whitespace-nowrap">
+                        🏠 Beranda
+                    </button>
+                    <button onclick="switchMode('train')" id="nav-train" class="nav-btn flex-1 md:flex-none px-4 py-2 rounded-xl text-sm font-bold text-slate-500 hover:text-indigo-600 hover:bg-white/50 transition-all whitespace-nowrap">
+                        📚 Latih
+                    </button>
+                    <button onclick="switchMode('test')" id="nav-test" class="nav-btn flex-1 md:flex-none px-4 py-2 rounded-xl text-sm font-bold text-slate-500 hover:text-indigo-600 hover:bg-white/50 transition-all whitespace-nowrap">
+                        🎯 Tes
+                    </button>
+                    <button onclick="switchMode('brain')" id="nav-brain" class="nav-btn flex-1 md:flex-none px-4 py-2 rounded-xl text-sm font-bold text-slate-500 hover:text-indigo-600 hover:bg-white/50 transition-all whitespace-nowrap">
+                        🧠 Otak
+                    </button>
+                </nav>
+            </div>
+        </header>
+    </div>
+
+    <main class="flex-1 overflow-y-auto p-4 md:p-6 w-full max-w-4xl mx-auto relative pb-20">
+        
+        <!-- ==================== HOME VIEW ==================== -->
+        <section id="view-home" class="fade-in hidden flex flex-col gap-6">
+            <div class="text-center glass-panel p-8 rounded-3xl relative overflow-hidden">
+                <div class="absolute -top-10 -right-10 text-9xl opacity-10">🤖</div>
+                <h2 class="text-3xl md:text-4xl font-black text-slate-800 mb-3 relative z-10">Selamat Datang di Lab AI! 🚀</h2>
+                <p class="text-lg text-slate-600 font-medium relative z-10 max-w-2xl mx-auto">Di sini kamu akan bermain dan melihat bagaimana komputer bisa menjadi "pintar" seperti otak manusia dengan cara mengingat dan mengenali pola.</p>
+            </div>
+
+            <div class="glass-panel p-6 rounded-3xl">
+                <h3 class="text-2xl font-black text-center mb-6 text-indigo-900">Cara Kerja AI ⚙️</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-white/80 p-5 rounded-2xl shadow-sm border border-white hover:shadow-md transition-all flex gap-4 items-center">
+                        <div class="text-5xl bg-indigo-50 w-16 h-16 rounded-2xl flex items-center justify-center shrink-0">📥</div>
+                        <div>
+                            <h4 class="font-extrabold text-lg text-indigo-900">1. Beri Contoh</h4>
+                            <p class="text-sm text-slate-600 font-medium">AI butuh data. Kita beritahu AI nama hewan dan ciri-cirinya.</p>
+                        </div>
+                    </div>
+                    <div class="bg-white/80 p-5 rounded-2xl shadow-sm border border-white hover:shadow-md transition-all flex gap-4 items-center">
+                        <div class="text-5xl bg-fuchsia-50 w-16 h-16 rounded-2xl flex items-center justify-center shrink-0">🧠</div>
+                        <div>
+                            <h4 class="font-extrabold text-lg text-fuchsia-900">2. Cari Pola</h4>
+                            <p class="text-sm text-slate-600 font-medium">AI mengingat kombinasi ciri-ciri. Oh, kucing itu berbulu & mengeong!</p>
+                        </div>
+                    </div>
+                    <div class="bg-white/80 p-5 rounded-2xl shadow-sm border border-white hover:shadow-md transition-all flex gap-4 items-center">
+                        <div class="text-5xl bg-orange-50 w-16 h-16 rounded-2xl flex items-center justify-center shrink-0">🎯</div>
+                        <div>
+                            <h4 class="font-extrabold text-lg text-orange-900">3. Tebak</h4>
+                            <p class="text-sm text-slate-600 font-medium">Beri AI ciri-ciri, dan ia akan mencari yang paling mirip di ingatannya.</p>
+                        </div>
+                    </div>
+                    <div class="bg-white/80 p-5 rounded-2xl shadow-sm border border-white hover:shadow-md transition-all flex gap-4 items-center">
+                        <div class="text-5xl bg-emerald-50 w-16 h-16 rounded-2xl flex items-center justify-center shrink-0">🔄</div>
+                        <div>
+                            <h4 class="font-extrabold text-lg text-emerald-900">4. Belajar Lagi</h4>
+                            <p class="text-sm text-slate-600 font-medium">Jika tebakan salah, kita benarkan, dan AI akan semakin pintar!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="switchMode('train')" class="mt-2 btn-modern text-white text-xl font-black py-4 px-10 rounded-full mx-auto w-full md:w-auto flex items-center justify-center gap-3">
+                Mulai Latih AI Sekarang <span class="text-2xl">✨</span>
+            </button>
+        </section>
+
+        <!-- ==================== TRAIN VIEW ==================== -->
+        <section id="view-train" class="fade-in hidden flex flex-col gap-6">
+            <div class="bg-gradient-to-r from-indigo-100 to-purple-100 p-5 rounded-3xl border border-white shadow-sm">
+                <h2 class="text-2xl font-black text-indigo-900 flex items-center gap-3">
+                    <span class="bg-white p-2 rounded-xl shadow-sm">📚</span> Tahap 1: Melatih AI
+                </h2>
+                <p class="text-indigo-700 mt-2 font-medium">Pilih satu hewan, lalu pilih ciri-cirinya agar AI mengingatnya dalam "otak"nya.</p>
+            </div>
+
+            <div id="train-step-1" class="glass-panel p-6 rounded-3xl">
+                <h3 class="font-extrabold text-lg mb-4 flex items-center gap-3 text-slate-700">
+                    <span class="bg-indigo-600 text-white w-8 h-8 rounded-full flex items-center justify-center">1</span> 
+                    Pilih Hewan:
+                </h3>
+                <div id="train-animal-grid" class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <!-- Animal cards injected via JS -->
+                </div>
+            </div>
+
+            <div id="train-step-2" class="opacity-50 pointer-events-none transition-all duration-300 glass-panel p-6 rounded-3xl relative">
+                <div id="train-step-2-overlay" class="absolute inset-0 bg-white/40 backdrop-blur-[2px] z-10 rounded-3xl transition-opacity duration-300"></div>
+                <h3 class="font-extrabold text-lg mb-4 flex items-center gap-3 text-slate-700 relative z-20">
+                    <span class="bg-indigo-600 text-white w-8 h-8 rounded-full flex items-center justify-center">2</span> 
+                    Pilih Ciri-cirinya:
+                </h3>
+                <div id="train-feature-grid" class="flex flex-wrap gap-3 relative z-20">
+                    <!-- Feature chips injected via JS -->
+                </div>
+            </div>
+
+            <div id="train-actions" class="hidden flex-col items-center mt-2">
+                <button id="btn-do-train" class="btn-modern bg-gradient-to-r from-emerald-400 to-emerald-600 text-white font-black py-4 px-10 rounded-full w-full md:w-auto text-xl flex items-center gap-3">
+                    <span class="text-3xl">🧠</span> Ajarkan ke AI
+                </button>
+            </div>
+
+            <!-- Animation Container -->
+            <div id="train-animation" class="hidden flex-col items-center justify-center py-10 px-4 glass-panel rounded-3xl">
+                <h3 id="anim-status-text" class="text-2xl font-black text-indigo-600 mb-10 text-center drop-shadow-sm">AI sedang bersiap...</h3>
+                
+                <div class="flex items-center justify-center gap-3 md:gap-8 relative w-full max-w-lg">
+                    <!-- Connection Line -->
+                    <div class="absolute top-1/2 left-10 right-10 h-2 bg-slate-200 -translate-y-1/2 rounded-full z-0 overflow-hidden">
+                        <div id="anim-line-progress" class="h-full bg-indigo-500 w-0 transition-all duration-300"></div>
+                    </div>
+
+                    <div id="anim-box-input" class="relative z-10 w-20 h-20 md:w-24 md:h-24 rounded-3xl border-4 border-white flex flex-col items-center justify-center text-4xl md:text-5xl bg-white shadow-xl transition-all duration-500">
+                        📥
+                    </div>
+                    
+                    <div id="anim-box-process" class="relative z-10 w-20 h-20 md:w-24 md:h-24 rounded-3xl border-4 border-white flex flex-col items-center justify-center text-4xl md:text-5xl bg-white shadow-xl transition-all duration-500 delay-100">
+                        🧠
+                    </div>
+                    
+                    <div id="anim-box-memory" class="relative z-10 w-20 h-20 md:w-24 md:h-24 rounded-3xl border-4 border-white flex flex-col items-center justify-center text-4xl md:text-5xl bg-white shadow-xl transition-all duration-500 delay-200">
+                        💾
+                    </div>
+                </div>
+                
+                <div id="train-success-actions" class="hidden mt-10 flex flex-col sm:flex-row gap-4 w-full px-4 justify-center">
+                    <button onclick="resetTrainMode()" class="px-8 py-3 bg-white hover:bg-slate-50 text-indigo-600 font-bold rounded-full shadow-md border-2 border-indigo-100 transition-all hover:scale-105">Latih Hewan Lain</button>
+                    <button onclick="switchMode('test')" class="px-8 py-3 btn-modern text-white font-bold rounded-full flex items-center justify-center gap-2">Lanjut ke Tes AI 🎯</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== TEST VIEW ==================== -->
+        <section id="view-test" class="fade-in hidden flex flex-col gap-6">
+            <div class="bg-gradient-to-r from-orange-100 to-amber-100 p-5 rounded-3xl border border-white shadow-sm">
+                <h2 class="text-2xl font-black text-orange-900 flex items-center gap-3">
+                    <span class="bg-white p-2 rounded-xl shadow-sm">🎯</span> Tahap 2: Uji Kemampuan AI
+                </h2>
+                <p class="text-orange-800 mt-2 font-medium">Berikan ciri-ciri tanpa nama, dan lihat apakah AI bisa menebak hewan apa yang kamu maksud!</p>
+            </div>
+
+            <!-- Empty State -->
+            <div id="test-empty-state" class="hidden text-center p-10 glass-panel rounded-3xl">
+                <div class="text-7xl mb-6 anim-float inline-block">🤷‍♂️</div>
+                <h3 class="text-2xl font-black text-slate-800 mb-3">Otak AI Masih Kosong</h3>
+                <p class="text-slate-600 mb-8 font-medium max-w-md mx-auto">AI belum tahu hewan apa-apa. Kamu harus melatihnya terlebih dahulu agar ia punya ingatan.</p>
+                <button onclick="switchMode('train')" class="btn-modern text-white px-8 py-4 rounded-full font-black text-lg">Kembali Latih AI</button>
+            </div>
+
+            <div id="test-content" class="glass-panel p-6 rounded-3xl">
+                <h3 class="font-extrabold text-lg mb-4 text-slate-700 flex items-center gap-2">
+                    🔍 Pilih Ciri-ciri untuk ditebak:
+                </h3>
+                <div id="test-feature-grid" class="flex flex-wrap gap-3 mb-8">
+                    <!-- Feature chips injected via JS -->
+                </div>
+
+                <div class="flex justify-center border-t border-slate-200/50 pt-6">
+                    <button id="btn-do-test" class="bg-gradient-to-r from-orange-400 to-orange-600 hover:from-orange-500 hover:to-orange-700 text-white font-black py-4 px-10 rounded-full shadow-xl w-full md:w-auto text-xl transition-all transform hover:scale-105 hover:-translate-y-1 disabled:opacity-50 disabled:scale-100 disabled:translate-y-0 disabled:shadow-none flex items-center justify-center gap-3" disabled>
+                        Tanyakan ke AI 🔮
+                    </button>
+                </div>
+            </div>
+
+            <!-- Result Area -->
+            <div id="test-result-area" class="hidden glass-panel p-8 rounded-3xl text-center flex-col items-center mt-2 relative overflow-hidden">
+                
+                <!-- Thinking State -->
+                <div id="test-thinking" class="flex flex-col items-center py-10 w-full">
+                    <div class="relative w-24 h-24 mb-6">
+                        <div class="absolute inset-0 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+                        <div class="absolute inset-0 flex items-center justify-center text-5xl">🤔</div>
+                    </div>
+                    <h3 class="text-2xl font-black text-indigo-900 bg-clip-text">Mencocokkan pola di memori...</h3>
+                </div>
+
+                <!-- Answer State -->
+                <div id="test-answer" class="hidden w-full flex-col items-center fade-in">
+                    <div class="bg-orange-100 text-orange-800 font-bold px-4 py-1 rounded-full text-sm mb-6 inline-block">Hasil Tebakan AI</div>
+                    
+                    <div class="relative">
+                        <div class="absolute inset-0 bg-indigo-400 blur-2xl opacity-20 rounded-full"></div>
+                        <div id="ai-guess-display" class="text-8xl mb-4 relative z-10 anim-float">❓</div>
+                    </div>
+                    
+                    <h3 id="ai-guess-name" class="text-4xl font-black text-slate-800 mb-8 capitalize">Hewan</h3>
+                    
+                    <div id="feedback-section" class="w-full bg-slate-50/80 p-6 rounded-3xl border border-white">
+                        <p class="font-extrabold text-lg mb-4 text-slate-700">Apakah tebakan AI benar?</p>
+                        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                            <button onclick="handleTestFeedback(true)" class="flex-1 sm:max-w-[200px] bg-gradient-to-r from-emerald-400 to-emerald-500 hover:from-emerald-500 hover:to-emerald-600 text-white font-black py-4 rounded-2xl shadow-lg transition-transform hover:scale-105 flex items-center justify-center gap-2 text-xl">
+                                ✅ Benar!
+                            </button>
+                            <button onclick="handleTestFeedback(false)" class="flex-1 sm:max-w-[200px] bg-gradient-to-r from-rose-400 to-rose-500 hover:from-rose-500 hover:to-rose-600 text-white font-black py-4 rounded-2xl shadow-lg transition-transform hover:scale-105 flex items-center justify-center gap-2 text-xl">
+                                ❌ Salah
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Correction State (Iterative Learning) -->
+                <div id="test-correction" class="hidden w-full flex flex-col items-center fade-in">
+                    <div class="text-6xl mb-2">🥺</div>
+                    <h3 class="text-3xl font-black text-rose-600 mb-2">Oops, AI Salah!</h3>
+                    <p class="mb-6 text-slate-600 font-medium">Bantu AI belajar. Hewan apa yang sebenarnya kamu maksud dengan ciri-ciri tadi?</p>
+                    
+                    <div id="correction-animal-grid" class="grid grid-cols-2 md:grid-cols-3 gap-3 w-full mb-6">
+                        <!-- Correction animals injected via JS -->
+                    </div>
+                    
+                    <button id="btn-submit-correction" class="hidden btn-modern text-white font-black py-4 px-10 rounded-full w-full sm:w-auto text-lg flex items-center justify-center gap-2">
+                        💾 Simpan Jawaban Benar
+                    </button>
+                </div>
+
+                <!-- Done State -->
+                <div id="test-done" class="hidden w-full flex-col items-center py-6 fade-in">
+                    <div class="text-7xl mb-4 anim-float">🎉</div>
+                    <h3 class="text-2xl md:text-3xl font-black text-emerald-600 mb-3" id="test-done-msg">Hebat! AI berhasil menebak!</h3>
+                    <p class="text-slate-600 mb-8 font-medium" id="test-done-submsg">AI akan mengingat ini untuk ke depannya.</p>
+                    <button onclick="resetTestMode()" class="px-8 py-4 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-full shadow-lg transition-transform hover:scale-105">Uji AI Lagi 🔮</button>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ==================== BRAIN VIEW ==================== -->
+        <section id="view-brain" class="fade-in hidden flex flex-col gap-6 pb-10">
+            <div class="bg-gradient-to-r from-fuchsia-100 to-pink-100 p-5 rounded-3xl border border-white shadow-sm">
+                <h2 class="text-2xl font-black text-fuchsia-900 flex items-center gap-3">
+                    <span class="bg-white p-2 rounded-xl shadow-sm">🧠</span> Lihat Otak AI
+                </h2>
+                <p class="text-fuchsia-800 mt-2 font-medium">Melihat isi memori AI. Semakin banyak data yang masuk, AI akan semakin pintar.</p>
+            </div>
+
+            <!-- Stats -->
+            <div class="grid grid-cols-3 gap-4">
+                <div class="glass-panel p-4 md:p-6 rounded-3xl text-center flex flex-col items-center justify-center">
+                    <div id="stat-animals" class="text-4xl md:text-5xl font-black text-indigo-600 mb-1">0</div>
+                    <div class="text-xs md:text-sm text-slate-500 font-bold uppercase tracking-wider">Hewan Dikenal</div>
+                </div>
+                <div class="glass-panel p-4 md:p-6 rounded-3xl text-center flex flex-col items-center justify-center">
+                    <div id="stat-examples" class="text-4xl md:text-5xl font-black text-emerald-500 mb-1">0</div>
+                    <div class="text-xs md:text-sm text-slate-500 font-bold uppercase tracking-wider">Total Contoh</div>
+                </div>
+                <div class="glass-panel p-4 md:p-6 rounded-3xl text-center flex flex-col items-center justify-center">
+                    <div id="stat-accuracy" class="text-4xl md:text-5xl font-black text-orange-500 mb-1">-</div>
+                    <div class="text-xs md:text-sm text-slate-500 font-bold uppercase tracking-wider">Akurasi Tes</div>
+                </div>
+            </div>
+
+            <!-- Knowledge Base List -->
+            <div class="glass-panel p-6 rounded-3xl">
+                <h3 class="font-extrabold text-xl mb-6 flex items-center gap-3 text-slate-800">
+                    <span class="text-2xl">📚</span> Data Memori
+                </h3>
+                <div id="knowledge-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Injected via JS -->
+                </div>
+                <div id="knowledge-empty" class="text-center p-10 bg-slate-50/50 rounded-2xl border-2 border-dashed border-slate-300 text-slate-500 hidden font-medium">
+                    <div class="text-4xl mb-3">🕸️</div>
+                    Otak AI masih kosong. Belum ada hewan yang dipelajari.
+                </div>
+            </div>
+
+            <!-- Learning Log -->
+            <div class="glass-panel p-6 rounded-3xl mt-2">
+                <h3 class="font-extrabold text-xl mb-6 flex items-center gap-3 text-slate-800">
+                    <span class="text-2xl">📝</span> Catatan Belajar (Log)
+                </h3>
+                <div id="learning-log" class="bg-white/60 rounded-2xl overflow-hidden flex flex-col max-h-80 overflow-y-auto custom-scrollbar border border-white">
+                    <!-- Injected via JS -->
+                </div>
+                <div id="log-empty" class="text-center p-8 text-slate-400 font-medium">
+                    Belum ada aktivitas.
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // --- AUDIO SYSTEM (Tone.js) ---
+        let audioInitialized = false;
+        
+        // Define Synths
+        const popSynth = new Tone.PolySynth(Tone.Synth, {
+            oscillator: { type: "triangle" },
+            envelope: { attack: 0.01, decay: 0.1, sustain: 0.1, release: 0.5 }
+        }).toDestination();
+        popSynth.volume.value = -12;
+
+        const blipSynth = new Tone.Synth({
+            oscillator: { type: "sine" },
+            envelope: { attack: 0.01, decay: 0.1, sustain: 0, release: 0.1 }
+        }).toDestination();
+        blipSynth.volume.value = -15;
+
+        const successSynth = new Tone.PolySynth(Tone.AMSynth).toDestination();
+        successSynth.volume.value = -10;
+
+        const errorSynth = new Tone.FMSynth({
+            harmonicity: 0.5,
+            modulationIndex: 10,
+            oscillator: { type: "sawtooth" },
+            envelope: { attack: 0.1, decay: 0.3, sustain: 0.1, release: 0.2 }
+        }).toDestination();
+        errorSynth.volume.value = -12;
+
+        const processSynth = new Tone.MembraneSynth().toDestination();
+        processSynth.volume.value = -20;
+        let processInterval;
+
+        const Sound = {
+            init: async () => {
+                if (!audioInitialized) {
+                    await Tone.start();
+                    audioInitialized = true;
+                    console.log("Audio Engine Ready");
+                }
+            },
+            click: () => { if(audioInitialized) blipSynth.triggerAttackRelease("C6", "32n"); },
+            pop: (pitch = "C5") => { if(audioInitialized) popSynth.triggerAttackRelease(pitch, "16n"); },
+            success: () => { if(audioInitialized) successSynth.triggerAttackRelease(["C4", "E4", "G4", "C5"], "8n"); },
+            error: () => { if(audioInitialized) errorSynth.triggerAttackRelease("C2", "4n"); },
+            startProcessing: () => {
+                if(audioInitialized) {
+                    let tick = 0;
+                    processInterval = setInterval(() => {
+                        const note = tick % 2 === 0 ? "C3" : "G2";
+                        processSynth.triggerAttackRelease(note, "32n");
+                        tick++;
+                    }, 150);
+                }
+            },
+            stopProcessing: () => {
+                if(processInterval) clearInterval(processInterval);
+            }
+        };
+
+        // Initialize audio on first click anywhere
+        document.body.addEventListener('pointerdown', Sound.init, { once: true });
+
+
+        // --- DATA DEFINITIONS ---
+        const DATA_ANIMALS = [
+            { id: 'A1', name: 'Kucing', emoji: '🐱', color: 'text-orange-500' },
+            { id: 'A2', name: 'Anjing', emoji: '🐶', color: 'text-amber-600' },
+            { id: 'A3', name: 'Burung', emoji: '🐦', color: 'text-sky-500' },
+            { id: 'A4', name: 'Ikan', emoji: '🐟', color: 'text-blue-500' },
+            { id: 'A5', name: 'Kelinci', emoji: '🐰', color: 'text-pink-500' },
+            { id: 'A6', name: 'Gajah', emoji: '🐘', color: 'text-slate-500' }
+        ];
+
+        const DATA_FEATURES = [
+            { id: 'F1', label: 'Berbulu', emoji: '🪶' },
+            { id: 'F2', label: 'Bersayap', emoji: '🪽' },
+            { id: 'F3', label: 'Berkaki 4', emoji: '🦵' },
+            { id: 'F4', label: 'Bisa Berenang', emoji: '🏊' },
+            { id: 'F5', label: 'Mengaum', emoji: '📢' },
+            { id: 'F6', label: 'Mengeong', emoji: '🔔' },
+            { id: 'F7', label: 'Bisa Terbang', emoji: '🚀' },
+            { id: 'F8', label: 'Besar', emoji: '📏' },
+            { id: 'F9', label: 'Kecil', emoji: '🔍' },
+            { id: 'F10', label: 'Telinga Panjang', emoji: '👂' },
+            { id: 'F11', label: 'Punya Belalai', emoji: '🤧' },
+            { id: 'F12', label: 'Bersisik', emoji: '✨' }
+        ];
+
+        const getAnimal = id => DATA_ANIMALS.find(a => a.id === id);
+        const getFeature = id => DATA_FEATURES.find(f => f.id === id);
+
+        // --- STATE MANAGEMENT ---
+        const state = {
+            currentMode: 'home',
+            aiKnowledge: {}, 
+            learningLog: [], 
+            stats: { totalTests: 0, correctTests: 0 },
+            train: { selectedAnimalId: null, selectedFeatureIds: [] },
+            test: { selectedFeatureIds: [], guessedAnimalId: null, correctionAnimalId: null }
+        };
+
+        // --- UTILITIES ---
+        function getTimestamp() {
+            const now = new Date();
+            return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+        }
+
+        function logActivity(type, message) {
+            state.learningLog.unshift({ time: getTimestamp(), type, message });
+        }
+
+        // --- NAVIGATION LOGIC ---
+        const views = ['home', 'train', 'test', 'brain'];
+        
+        function switchMode(mode) {
+            Sound.click();
+            state.currentMode = mode;
+            
+            // Update Nav styling
+            views.forEach(v => {
+                const btn = document.getElementById(`nav-${v}`);
+                if (v === mode) {
+                    btn.classList.add('bg-white', 'shadow-sm', 'text-indigo-700');
+                    btn.classList.remove('text-slate-500', 'hover:bg-white/50');
+                } else {
+                    btn.classList.remove('bg-white', 'shadow-sm', 'text-indigo-700');
+                    btn.classList.add('text-slate-500', 'hover:bg-white/50');
+                }
+                
+                // Toggle View visibility
+                const viewEl = document.getElementById(`view-${v}`);
+                if (v === mode) {
+                    viewEl.classList.remove('hidden');
+                    if(mode === 'train') initTrainView();
+                    if(mode === 'test') initTestView();
+                    if(mode === 'brain') updateBrainStats();
+                } else {
+                    viewEl.classList.add('hidden');
+                }
+            });
+        }
+
+        function initTrainView() {
+            renderTrainAnimals();
+            renderTrainFeatures();
+            updateTrainUIState();
+        }
+
+        function renderTrainAnimals() {
+            const grid = document.getElementById('train-animal-grid');
+            grid.innerHTML = '';
+            
+            const pitches = ["C4", "D4", "E4", "F4", "G4", "A4"];
+
+            DATA_ANIMALS.forEach((animal, index) => {
+                const isSelected = state.train.selectedAnimalId === animal.id;
+                const div = document.createElement('div');
+                div.className = `selectable-card p-4 rounded-2xl flex flex-col items-center justify-center relative ${isSelected ? 'selected' : ''}`;
+                
+                // Perbaikan: Menghapus kondisi pembatas yang salah agar hewan selalu bisa diklik
+                div.onclick = () => {
+                    state.train.selectedAnimalId = animal.id;
+                    Sound.pop(pitches[index % pitches.length]);
+                    renderTrainAnimals(); 
+                    updateTrainUIState();
+                };
+                
+                div.innerHTML = `
+                    <div class="text-5xl md:text-6xl mb-2 filter drop-shadow-md">${animal.emoji}</div>
+                    <div class="font-extrabold text-sm md:text-base ${animal.color}">${animal.name}</div>
+                `;
+                grid.appendChild(div);
+            });
+        }
+
+        function renderTrainFeatures() {
+            const grid = document.getElementById('train-feature-grid');
+            grid.innerHTML = '';
+            
+            const pitches = ["C5", "D5", "E5", "G5", "A5", "C6"];
+
+            DATA_FEATURES.forEach((feature, index) => {
+                const isSelected = state.train.selectedFeatureIds.includes(feature.id);
+                const div = document.createElement('div');
+                div.className = `feature-chip px-4 py-2 md:py-3 rounded-2xl text-sm md:text-base flex items-center gap-2 ${isSelected ? 'selected' : 'text-slate-600'}`;
+                div.onclick = () => {
+                    Sound.pop(pitches[index % pitches.length]);
+                    const idx = state.train.selectedFeatureIds.indexOf(feature.id);
+                    if (idx > -1) {
+                        state.train.selectedFeatureIds.splice(idx, 1);
+                    } else {
+                        state.train.selectedFeatureIds.push(feature.id);
+                    }
+                    renderTrainFeatures();
+                    updateTrainUIState();
+                };
+                div.innerHTML = `<span class="text-xl">${feature.emoji}</span> <span>${feature.label}</span>`;
+                grid.appendChild(div);
+            });
+        }
+
+        function updateTrainUIState() {
+            const step2 = document.getElementById('train-step-2');
+            const step2Overlay = document.getElementById('train-step-2-overlay');
+            const actions = document.getElementById('train-actions');
+
+            if (state.train.selectedAnimalId) {
+                step2.classList.remove('opacity-50', 'pointer-events-none');
+                step2Overlay.classList.add('opacity-0');
+                setTimeout(() => step2Overlay.classList.add('hidden'), 300);
+            } else {
+                step2.classList.add('opacity-50', 'pointer-events-none');
+                step2Overlay.classList.remove('hidden');
+                setTimeout(() => step2Overlay.classList.remove('opacity-0'), 10);
+            }
+
+            if (state.train.selectedAnimalId && state.train.selectedFeatureIds.length > 0) {
+                actions.classList.remove('hidden');
+                actions.classList.add('flex', 'fade-in');
+            } else {
+                actions.classList.add('hidden');
+                actions.classList.remove('flex', 'fade-in');
+            }
+        }
+
+        document.getElementById('btn-do-train').addEventListener('click', runTrainAnimation);
+
+        function runTrainAnimation() {
+            Sound.click();
+            Sound.startProcessing();
+
+            document.getElementById('train-step-1').classList.add('hidden');
+            document.getElementById('train-step-2').classList.add('hidden');
+            document.getElementById('train-actions').classList.add('hidden');
+            
+            const animContainer = document.getElementById('train-animation');
+            animContainer.classList.remove('hidden');
+            animContainer.classList.add('flex', 'fade-in');
+            
+            const boxIn = document.getElementById('anim-box-input');
+            const boxProc = document.getElementById('anim-box-process');
+            const boxMem = document.getElementById('anim-box-memory');
+            const statusText = document.getElementById('anim-status-text');
+            const progressLine = document.getElementById('anim-line-progress');
+            document.getElementById('train-success-actions').classList.add('hidden');
+            
+            // Reset
+            [boxIn, boxProc, boxMem].forEach(b => {
+                b.className = 'relative z-10 w-20 h-20 md:w-24 md:h-24 rounded-3xl border-4 border-white flex flex-col items-center justify-center text-4xl md:text-5xl bg-white shadow-xl transition-all duration-500';
+            });
+            progressLine.style.width = '0%';
+            statusText.className = 'text-2xl font-black text-indigo-600 mb-10 text-center drop-shadow-sm transition-colors duration-300';
+
+            // Sequence
+            setTimeout(() => {
+                statusText.innerText = "Mengumpulkan data contoh...";
+                boxIn.classList.add('anim-processing');
+                progressLine.style.width = '33%';
+            }, 100);
+
+            setTimeout(() => {
+                boxIn.classList.remove('anim-processing');
+                boxIn.classList.add('anim-learned');
+                
+                statusText.innerText = "Mengekstrak dan mencari pola...";
+                boxProc.classList.add('anim-processing');
+                progressLine.style.width = '66%';
+            }, 1500);
+
+            setTimeout(() => {
+                boxProc.classList.remove('anim-processing');
+                boxProc.classList.add('anim-learned');
+
+                statusText.innerText = "Menyimpan ke dalam memori AI...";
+                boxMem.classList.add('anim-processing');
+                progressLine.style.width = '100%';
+                
+                saveTrainingData(state.train.selectedAnimalId, [...state.train.selectedFeatureIds]);
+                
+            }, 3000);
+
+            setTimeout(() => {
+                Sound.stopProcessing();
+                Sound.success();
+                
+                boxMem.classList.remove('anim-processing');
+                boxMem.classList.add('anim-learned');
+                
+                statusText.innerText = "✅ Selesai! AI berhasil belajar.";
+                statusText.classList.remove('text-indigo-600');
+                statusText.classList.add('text-emerald-600');
+                
+                document.getElementById('train-success-actions').classList.remove('hidden');
+                document.getElementById('train-success-actions').classList.add('fade-in');
+            }, 4500);
+        }
+
+        function saveTrainingData(animalId, featureIds) {
+            if (!state.aiKnowledge[animalId]) {
+                state.aiKnowledge[animalId] = [];
+            }
+            state.aiKnowledge[animalId].push(featureIds);
+            const animal = getAnimal(animalId);
+            logActivity('train', `AI belajar pola baru untuk <b>${animal.emoji} ${animal.name}</b> (${featureIds.length} ciri).`);
+        }
+
+        function resetTrainMode() {
+            Sound.click();
+            state.train.selectedAnimalId = null;
+            state.train.selectedFeatureIds = [];
+            
+            document.getElementById('train-animation').classList.add('hidden');
+            document.getElementById('train-animation').classList.remove('flex', 'fade-in');
+            
+            document.getElementById('train-step-1').classList.remove('hidden');
+            document.getElementById('train-step-1').classList.add('fade-in');
+            document.getElementById('train-step-2').classList.remove('hidden');
+            document.getElementById('train-step-2').classList.add('fade-in');
+            
+            initTrainView();
+        }
+
+        function initTestView() {
+            const hasKnowledge = Object.keys(state.aiKnowledge).length > 0;
+            
+            if (!hasKnowledge) {
+                document.getElementById('test-empty-state').classList.remove('hidden');
+                document.getElementById('test-content').classList.add('hidden');
+                document.getElementById('test-result-area').classList.add('hidden');
+                return;
+            } else {
+                document.getElementById('test-empty-state').classList.add('hidden');
+                document.getElementById('test-content').classList.remove('hidden');
+            }
+
+            renderTestFeatures();
+        }
+
+        function renderTestFeatures() {
+            const grid = document.getElementById('test-feature-grid');
+            grid.innerHTML = '';
+            
+            const pitches = ["C5", "D5", "E5", "G5", "A5", "C6"];
+
+            DATA_FEATURES.forEach((feature, index) => {
+                const isSelected = state.test.selectedFeatureIds.includes(feature.id);
+                const div = document.createElement('div');
+                div.className = `feature-chip px-4 py-2 md:py-3 rounded-2xl text-sm md:text-base flex items-center gap-2 ${isSelected ? 'selected' : 'text-slate-600'}`;
+                div.onclick = () => {
+                    Sound.pop(pitches[index % pitches.length]);
+                    const idx = state.test.selectedFeatureIds.indexOf(feature.id);
+                    if (idx > -1) {
+                        state.test.selectedFeatureIds.splice(idx, 1);
+                    } else {
+                        state.test.selectedFeatureIds.push(feature.id);
+                    }
+                    renderTestFeatures();
+                    
+                    document.getElementById('btn-do-test').disabled = state.test.selectedFeatureIds.length === 0;
+                };
+                div.innerHTML = `<span class="text-xl">${feature.emoji}</span> <span>${feature.label}</span>`;
+                grid.appendChild(div);
+            });
+        }
+
+        document.getElementById('btn-do-test').addEventListener('click', runTest);
+
+        function runTest() {
+            Sound.click();
+            Sound.startProcessing();
+            
+            document.getElementById('test-content').classList.add('hidden');
+            document.getElementById('test-result-area').classList.remove('hidden');
+            document.getElementById('test-result-area').classList.add('flex', 'fade-in');
+            
+            document.getElementById('test-thinking').classList.remove('hidden');
+            document.getElementById('test-answer').classList.add('hidden');
+            document.getElementById('test-correction').classList.add('hidden');
+            document.getElementById('test-done').classList.add('hidden');
+
+            setTimeout(() => {
+                Sound.stopProcessing();
+                Sound.pop("C6");
+
+                document.getElementById('test-thinking').classList.add('hidden');
+                document.getElementById('test-answer').classList.remove('hidden');
+                document.getElementById('test-answer').classList.add('flex');
+                
+                // EXECUTE ALGORITHM
+                state.test.guessedAnimalId = guessAnimal(state.test.selectedFeatureIds);
+                
+                const animal = getAnimal(state.test.guessedAnimalId);
+                document.getElementById('ai-guess-display').innerText = animal.emoji;
+                document.getElementById('ai-guess-name').innerText = animal.name;
+                document.getElementById('ai-guess-name').className = `text-4xl font-black mb-8 capitalize ${animal.color}`;
+                
+            }, 2000);
+        }
+
+        // CORE ALGORITHM
+        function guessAnimal(testFeatures) {
+            let bestMatch = null;
+            let bestScore = -1;
+
+            for (const [animalId, examples] of Object.entries(state.aiKnowledge)) {
+                let totalScore = 0;
+                
+                for (const example of examples) {
+                    let matchCount = 0;
+                    for (const feature of testFeatures) {
+                        if (example.includes(feature)) matchCount++;
+                    }
+                    totalScore += matchCount;
+                }
+                
+                const avgScore = totalScore / examples.length;
+                
+                if (avgScore > bestScore) {
+                    bestScore = avgScore;
+                    bestMatch = animalId;
+                }
+            }
+
+            if (!bestMatch || bestScore === 0) {
+                const knownAnimals = Object.keys(state.aiKnowledge);
+                bestMatch = knownAnimals[Math.floor(Math.random() * knownAnimals.length)];
+            }
+            return bestMatch;
+        }
+
+        function handleTestFeedback(isCorrect) {
+            state.stats.totalTests++;
+            
+            if (isCorrect) {
+                Sound.success();
+                state.stats.correctTests++;
+                const animal = getAnimal(state.test.guessedAnimalId);
+                logActivity('test_correct', `🎯 Tebakan benar! AI mengenali <b>${animal.emoji} ${animal.name}</b>.`);
+                
+                document.getElementById('test-answer').classList.add('hidden');
+                document.getElementById('test-done').classList.remove('hidden');
+                
+                document.getElementById('test-done-msg').innerText = "Hebat! AI berhasil menebak!";
+                document.getElementById('test-done-msg').className = "text-2xl md:text-3xl font-black text-emerald-600 mb-3";
+                document.getElementById('test-done-submsg').innerText = "Pola algoritma AI bekerja dengan baik.";
+            } else {
+                Sound.error();
+                const animal = getAnimal(state.test.guessedAnimalId);
+                logActivity('test_wrong', `❌ Tebakan salah. AI mengira itu <b>${animal.name}</b>.`);
+                
+                document.getElementById('test-answer').classList.add('hidden');
+                document.getElementById('test-correction').classList.remove('hidden');
+                renderCorrectionAnimals();
+            }
+        }
+
+        function renderCorrectionAnimals() {
+            const grid = document.getElementById('correction-animal-grid');
+            const btnSubmit = document.getElementById('btn-submit-correction');
+            grid.innerHTML = '';
+            state.test.correctionAnimalId = null;
+            btnSubmit.classList.add('hidden');
+
+            const pitches = ["C4", "D4", "E4", "F4", "G4", "A4"];
+
+            DATA_ANIMALS.forEach((animal, index) => {
+                const div = document.createElement('div');
+                div.className = `selectable-card p-3 rounded-2xl flex flex-col items-center justify-center bg-white/80`;
+                div.onclick = () => {
+                    Sound.pop(pitches[index % pitches.length]);
+                    Array.from(grid.children).forEach(c => {
+                        c.classList.remove('selected', 'border-indigo-500', 'bg-indigo-50');
+                    });
+                    div.classList.add('selected', 'border-indigo-500', 'bg-indigo-50');
+                    
+                    state.test.correctionAnimalId = animal.id;
+                    btnSubmit.classList.remove('hidden');
+                    btnSubmit.classList.add('fade-in');
+                };
+                div.innerHTML = `
+                    <div class="text-4xl filter drop-shadow-sm mb-1">${animal.emoji}</div>
+                    <div class="font-bold text-sm ${animal.color}">${animal.name}</div>
+                `;
+                grid.appendChild(div);
+            });
+            
+            btnSubmit.onclick = () => {
+                Sound.success();
+                if (state.test.correctionAnimalId) {
+                    saveTrainingData(state.test.correctionAnimalId, [...state.test.selectedFeatureIds]);
+                    const correctAnim = getAnimal(state.test.correctionAnimalId);
+                    logActivity('train', `🔄 Iterasi: AI belajar memperbaiki kesalahan, kini mengenali <b>${correctAnim.emoji} ${correctAnim.name}</b> dari pola baru.`);
+                    
+                    document.getElementById('test-correction').classList.add('hidden');
+                    const doneEl = document.getElementById('test-done');
+                    doneEl.classList.remove('hidden');
+                    
+                    document.getElementById('test-done-msg').innerText = "Terima Kasih!";
+                    document.getElementById('test-done-msg').className = "text-2xl md:text-3xl font-black text-indigo-600 mb-3";
+                    document.getElementById('test-done-submsg').innerText = "AI sudah menyimpan jawaban benar dan belajar dari kesalahan ini.";
+                }
+            };
+        }
+
+        function resetTestMode() {
+            Sound.click();
+            state.test.selectedFeatureIds = [];
+            state.test.guessedAnimalId = null;
+            
+            document.getElementById('test-result-area').classList.add('hidden');
+            document.getElementById('test-result-area').classList.remove('flex', 'fade-in');
+            
+            initTestView();
+        }
+
+        function updateBrainStats() {
+            const knownAnimalIds = Object.keys(state.aiKnowledge);
+            let totalExamples = 0;
+            knownAnimalIds.forEach(id => {
+                totalExamples += state.aiKnowledge[id].length;
+            });
+
+            // Animate Numbers
+            animateValue('stat-animals', parseInt(document.getElementById('stat-animals').innerText) || 0, knownAnimalIds.length, 500);
+            animateValue('stat-examples', parseInt(document.getElementById('stat-examples').innerText) || 0, totalExamples, 500);
+            
+            const acc = state.stats.totalTests === 0 ? '-' : Math.round((state.stats.correctTests / state.stats.totalTests) * 100) + '%';
+            document.getElementById('stat-accuracy').innerText = acc;
+
+            renderKnowledgeBase(knownAnimalIds);
+            renderLearningLog();
+        }
+
+        function animateValue(id, start, end, duration) {
+            if (start === end) return;
+            const obj = document.getElementById(id);
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                obj.innerHTML = Math.floor(progress * (end - start) + start);
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                } else {
+                    obj.innerHTML = end;
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+
+        function renderKnowledgeBase(knownAnimalIds) {
+            const listContainer = document.getElementById('knowledge-list');
+            const emptyState = document.getElementById('knowledge-empty');
+            
+            listContainer.innerHTML = '';
+            
+            if (knownAnimalIds.length === 0) {
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+                
+                knownAnimalIds.forEach(animalId => {
+                    const animal = getAnimal(animalId);
+                    const examples = state.aiKnowledge[animalId];
+                    
+                    const uniqueFeaturesSet = new Set();
+                    examples.forEach(ex => ex.forEach(f => uniqueFeaturesSet.add(f)));
+                    
+                    let featuresHTML = '';
+                    Array.from(uniqueFeaturesSet).forEach(fId => {
+                        const f = getFeature(fId);
+                        if(f) featuresHTML += `<span class="inline-block bg-white shadow-sm border border-slate-100 text-slate-700 text-xs font-bold px-2 py-1 rounded-lg mb-2 mr-2">${f.emoji} ${f.label}</span>`;
+                    });
+
+                    const card = document.createElement('div');
+                    card.className = 'bg-white/80 p-5 rounded-3xl shadow-sm border border-white hover:shadow-md transition-all flex flex-col gap-3';
+                    card.innerHTML = `
+                        <div class="flex items-center gap-4 border-b border-slate-100 pb-3">
+                            <div class="text-5xl bg-slate-50 w-16 h-16 rounded-2xl flex items-center justify-center filter drop-shadow-sm">${animal.emoji}</div>
+                            <div class="flex-1">
+                                <h4 class="font-black text-xl ${animal.color}">${animal.name}</h4>
+                                <span class="text-xs bg-emerald-100 text-emerald-700 font-extrabold px-3 py-1 rounded-full mt-1 inline-block">${examples.length} Pola Ingatan</span>
+                            </div>
+                        </div>
+                        <div class="pt-1">
+                            <p class="text-xs text-slate-400 font-bold uppercase tracking-wider mb-2">Ciri dikenali:</p>
+                            <div>${featuresHTML}</div>
+                        </div>
+                    `;
+                    listContainer.appendChild(card);
+                });
+            }
+        }
+
+        function renderLearningLog() {
+            const logContainer = document.getElementById('learning-log');
+            const emptyLog = document.getElementById('log-empty');
+            
+            logContainer.innerHTML = '';
+            
+            if (state.learningLog.length === 0) {
+                emptyLog.classList.remove('hidden');
+                logContainer.classList.add('hidden');
+            } else {
+                emptyLog.classList.add('hidden');
+                logContainer.classList.remove('hidden');
+                
+                state.learningLog.forEach((log, index) => {
+                    const item = document.createElement('div');
+                    // Add slight delay to animation based on index
+                    item.className = `border-b border-slate-100/50 p-4 text-sm flex gap-4 items-start bg-white/40 hover:bg-white/80 transition-colors last:border-0 fade-in`;
+                    item.style.animationDelay = `${index * 0.05}s`;
+                    
+                    let icon = '📌';
+                    let iconBg = 'bg-slate-100 text-slate-500';
+                    
+                    if(log.type === 'train') { icon = '💾'; iconBg = 'bg-indigo-100 text-indigo-600'; }
+                    if(log.type === 'test_correct') { icon = '✅'; iconBg = 'bg-emerald-100 text-emerald-600'; }
+                    if(log.type === 'test_wrong') { icon = '❌'; iconBg = 'bg-rose-100 text-rose-600'; }
+
+                    item.innerHTML = `
+                        <div class="w-10 h-10 rounded-full ${iconBg} flex items-center justify-center text-lg shrink-0 shadow-sm">${icon}</div>
+                        <div class="flex-1 pt-1">
+                            <span class="text-slate-400 text-xs font-bold bg-white px-2 py-0.5 rounded-full shadow-sm mr-2">${log.time}</span>
+                            <p class="text-slate-700 mt-2 font-medium leading-relaxed">${log.message}</p>
+                        </div>
+                    `;
+                    logContainer.appendChild(item);
+                });
+            }
+        }
+
+        window.onload = () => {
+            switchMode('home');
+        };
+    </script>
+</body>
+</html>
