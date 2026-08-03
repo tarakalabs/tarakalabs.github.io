@@ -1,0 +1,704 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Lab - Belajar Buah</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #01375b; /* Dark ocean blue */
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(255,255,255,0.02) 0%, transparent 40%),
+                radial-gradient(circle at 80% 70%, rgba(255,255,255,0.02) 0%, transparent 40%);
+            color: white;
+            margin: 0; padding: 0;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ===== HUD (TOP RIGHT) ===== */
+        .hud {
+            position: absolute;
+            top: 20px; right: 20px;
+            display: flex; gap: 12px;
+            z-index: 50;
+        }
+        .mem-badge {
+            background: #111827; color: #4cd5ce;
+            padding: 8px 18px; border-radius: 20px;
+            font-weight: 800; font-size: 1.1rem;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .icon-btn {
+            background: white; color: #333;
+            width: 44px; height: 44px;
+            border-radius: 50%; border: none;
+            font-size: 1.2rem; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        /* ===== NAVIGATION ===== */
+        .nav-container { margin: 20px auto; max-w-3xl; display: flex; justify-content: center; gap: 10px; z-index: 10; position: relative; }
+        .nav-btn {
+            background: transparent; color: rgba(255,255,255,0.5);
+            border: 2px solid rgba(255,255,255,0.2);
+            padding: 8px 20px; border-radius: 8px;
+            font-weight: 700; cursor: pointer; transition: 0.2s;
+        }
+        .nav-btn.active { background: white; color: #01375b; border-color: white; }
+
+        /* ===== POLAROID CARDS ===== */
+        .polaroid {
+            background: white;
+            padding: 10px 10px 30px 10px;
+            border-radius: 4px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.2s;
+            flex-shrink: 0;
+        }
+        .polaroid-inner {
+            background: #2d3748; /* Dark screen */
+            width: 120px; height: 120px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 4.5rem; overflow: hidden;
+        }
+        .polaroid-title {
+            position: absolute; bottom: 5px; left: 0; right: 0;
+            text-align: center; color: #475569; font-weight: 800; font-size: 0.8rem;
+            text-transform: uppercase;
+        }
+        
+        .polaroid.selected { transform: scale(1.05); }
+        .target-bracket {
+            position: absolute; width: 25px; height: 25px;
+            border: 4px solid #4cd5ce; z-index: 20; display: none;
+        }
+        .polaroid.selected .target-bracket { display: block; }
+        .tb-tl { top: -10px; left: -10px; border-right: none; border-bottom: none; }
+        .tb-tr { top: -10px; right: -10px; border-left: none; border-bottom: none; }
+        .tb-bl { bottom: -10px; left: -10px; border-right: none; border-top: none; }
+        .tb-br { bottom: -10px; right: -10px; border-left: none; border-top: none; }
+
+        /* ===== FEATURE CHIPS ===== */
+        .feature-chip {
+            background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3);
+            color: white; padding: 10px 18px; border-radius: 8px;
+            font-weight: 700; cursor: pointer; transition: 0.2s;
+            display: inline-flex; align-items: center; gap: 8px;
+        }
+        .feature-chip.selected { background: #4cd5ce; border-color: #4cd5ce; color: #01375b; }
+
+        /* ===== ROBOT AI ===== */
+        .robot-container {
+            position: fixed; right: 6%; top: 45%; transform: translateY(-50%);
+            width: 160px; z-index: 0; opacity: 0; pointer-events: none; transition: 0.3s;
+            display: flex; flex-direction: column; align-items: center;
+        }
+        .robot-container.active { opacity: 1; z-index: 100; }
+        
+        .robot-lid {
+            background: white; width: 140px; height: 70px;
+            border-radius: 70px 70px 0 0; position: absolute; top: -65px; left: 10px;
+            transform-origin: bottom right; transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .robot-lid.open { transform: rotate(70deg); }
+        
+        .robot-body {
+            background: white; width: 160px; height: 120px;
+            border-radius: 20px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            position: relative; display: flex; flex-direction: column; align-items: center;
+        }
+        .robot-face {
+            background: #0f172a; width: 100%; height: 50px;
+            border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 18px;
+        }
+        .robot-eye { background: #4cd5ce; width: 18px; height: 12px; border-radius: 10px 10px 0 0; transition: 0.2s;}
+        .robot-mouth {
+            width: 16px; height: 8px; border-bottom: 3px solid #4cd5ce; border-radius: 0 0 10px 10px;
+            position: absolute; top: 48px;
+        }
+        .robot-body-text { color: #94a3b8; font-weight: 800; font-size: 1.2rem; margin-top: 15px; letter-spacing: 1px; }
+        .robot-base { background: #4cd5ce; width: 70px; height: 20px; border-radius: 0 0 35px 35px; margin: 0 auto; }
+
+        /* Robot states */
+        .robot-thinking .robot-eye { height: 4px; top: 2px; position: relative; }
+        .robot-happy .robot-mouth { height: 12px; border-bottom: 5px solid #4cd5ce; }
+        .robot-sad .robot-mouth { border-bottom: none; border-top: 3px solid #4cd5ce; border-radius: 10px 10px 0 0; top: 52px; }
+
+        /* Action container attached to Robot */
+        .robot-action-wrapper {
+            margin-top: 30px;
+            opacity: 0;
+            transform: translateY(-10px);
+            pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            text-align: center;
+        }
+        .robot-action-wrapper.show {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        /* ===== BUTTONS ===== */
+        .btn-flat {
+            background: white; color: #333; border: none;
+            padding: 14px 28px; font-size: 1.1rem; font-weight: 800;
+            border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 10px;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.2); transition: 0.1s;
+        }
+        .btn-flat:active { transform: translateY(4px); box-shadow: none; }
+        
+        .btn-yellow { background: #fbbf24; color: white; box-shadow: 0 4px 0 #d97706; }
+        .btn-yellow:active { box-shadow: none; }
+        .btn-green { background: #10b981; color: white; }
+        .btn-red { background: #ef4444; color: white; }
+
+        /* ===== VIEWS ===== */
+        .view-section { display: none; padding-bottom: 60px; animation: fadeIn 0.4s ease; max-width: 800px; margin: 0 auto; }
+        .view-section.active { display: block; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Custom Scrollbar */
+        .scroll-area { display: flex; gap: 20px; padding: 20px 10px; overflow-x: auto; scrollbar-width: none; }
+        .scroll-area::-webkit-scrollbar { display: none; }
+
+        /* Responsive Fix for Robot & Main Content */
+        @media (max-width: 768px) {
+            .robot-container {
+                right: -10px;
+                transform: translateY(-50%) scale(0.65);
+            }
+            .view-section {
+                padding-right: 120px; /* Prevent text going behind robot */
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HUD (Top Right) -->
+    <div class="hud">
+        <div class="mem-badge">
+            <span style="font-size:1.3rem;">🖼️</span> <span id="mem-counter">0</span>
+        </div>
+        <button class="icon-btn" onclick="resetAll()">🗑️</button>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="nav-container">
+        <button onclick="switchMode('train')" id="nav-train" class="nav-btn active">Latih AI</button>
+        <button onclick="switchMode('test')" id="nav-test" class="nav-btn">Uji AI</button>
+        <button onclick="switchMode('brain')" id="nav-brain" class="nav-btn">Memori</button>
+    </nav>
+
+    <!-- Robot Component & Train Action Button -->
+    <div class="robot-container active" id="main-robot">
+        <div style="position: relative;">
+            <div id="robot-lid" class="robot-lid"></div>
+            <div class="robot-body">
+                <div id="robot-face" class="robot-face">
+                    <div class="robot-eye"></div>
+                    <div class="robot-mouth"></div>
+                    <div class="robot-eye"></div>
+                </div>
+                <div class="robot-body-text">A.I.</div>
+            </div>
+            <div class="robot-base"></div>
+        </div>
+        <!-- Tombol Simpan Menempel di Bawah Robot -->
+        <div id="robot-action-wrapper" class="robot-action-wrapper">
+            <button id="btn-do-train" class="btn-flat btn-yellow px-5 py-3 whitespace-nowrap text-sm">
+                Simpan Memori <br> ke AI 🧠
+            </button>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <main class="px-6 relative z-10 w-full md:w-9/12">
+
+        <!-- ==================== TRAIN VIEW ==================== -->
+        <section id="view-train" class="view-section active">
+            <h2 class="text-3xl font-bold text-center mb-2">Apa buah ini?</h2>
+            <p class="text-center text-cyan-200 mb-6">Pilih foto buah untuk diajarkan ke AI.</p>
+
+            <!-- Expanded Fruit Grid -->
+            <div class="scroll-area" id="train-fruit-grid">
+                <!-- Injected via JS -->
+            </div>
+
+            <div id="train-features-section" class="mt-8 transition-opacity duration-300 opacity-50 pointer-events-none">
+                <h3 class="text-2xl font-bold mb-4">Pilih Ciri-Cirinya:</h3>
+                
+                <!-- Expanded Feature Grid -->
+                <div id="train-feature-grid" class="flex flex-wrap gap-3">
+                    <!-- Injected via JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== TEST VIEW ==================== -->
+        <section id="view-test" class="view-section">
+            
+            <div id="test-empty" class="text-center mt-20 hidden">
+                <div class="text-6xl mb-4">🤖</div>
+                <h2 class="text-3xl font-bold mb-4">AI Belum Belajar</h2>
+                <p class="text-cyan-200 mb-8">Latih AI terlebih dahulu sebelum mengujinya.</p>
+                <button onclick="switchMode('train')" class="btn-flat btn-yellow">Ke Latih AI</button>
+            </div>
+
+            <div id="test-content">
+                <h2 class="text-3xl font-bold text-center mb-6">Tanya AI</h2>
+                <p class="text-center text-cyan-200 mb-6">Berikan ciri-ciri, AI akan menebak nama buahnya.</p>
+                
+                <div id="test-feature-grid" class="flex flex-wrap gap-3 mb-8 justify-center">
+                    <!-- Injected via JS -->
+                </div>
+
+                <div class="text-center border-t border-cyan-800 pt-8">
+                    <button id="btn-do-test" class="btn-flat btn-yellow" disabled>
+                        Tebak Buah Ini
+                    </button>
+                </div>
+            </div>
+
+            <div id="test-result" class="hidden mt-10 flex flex-col items-center">
+                <h3 class="text-2xl font-bold mb-6" id="test-status-text">AI Berpikir...</h3>
+                
+                <!-- Guess Display -->
+                <div class="polaroid" id="guess-card">
+                    <div class="polaroid-inner" id="guess-emoji">❓</div>
+                    <div class="polaroid-title" id="guess-name">Menebak...</div>
+                </div>
+
+                <!-- Feedback Buttons -->
+                <div class="flex gap-4 mt-8" id="feedback-actions" style="display:none;">
+                    <button onclick="handleFeedback(false)" class="btn-flat btn-red">
+                        <span class="text-xl">⃠</span> Bukan
+                    </button>
+                    <button onclick="handleFeedback(true)" class="btn-flat btn-green">
+                        <span class="text-xl">✔</span> Benar
+                    </button>
+                </div>
+
+                <!-- Correction Area -->
+                <div id="correction-area" class="hidden mt-8 w-full">
+                    <p class="text-center text-cyan-200 mb-4">Buah apa yang benar?</p>
+                    <div class="scroll-area mb-6" id="correction-fruit-grid"></div>
+                    <div class="text-center">
+                        <button onclick="submitCorrection()" class="btn-flat btn-yellow" id="btn-submit-correction" style="display:none;">Simpan Jawaban</button>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ==================== BRAIN VIEW ==================== -->
+        <section id="view-brain" class="view-section">
+            <h2 class="text-3xl font-bold mb-6">Memori AI</h2>
+            
+            <div id="knowledge-empty" class="text-center py-12 text-cyan-200">
+                Memori masih kosong.
+            </div>
+
+            <div id="knowledge-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Injected via JS -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ===== LOGIC ===== -->
+    <script>
+        // --- AUDIO ---
+        let audioReady = false;
+        const popS = new Tone.PolySynth(Tone.Synth, { oscillator: { type: "triangle" }, envelope: { attack: 0.01, decay: 0.1, sustain: 0.1, release: 0.5 } }).toDestination();
+        popS.volume.value = -14;
+        const blipS = new Tone.Synth({ oscillator: { type: "sine" }, envelope: { attack: 0.01, decay: 0.08, sustain: 0, release: 0.08 } }).toDestination();
+        blipS.volume.value = -18;
+        const successS = new Tone.PolySynth(Tone.AMSynth).toDestination();
+        successS.volume.value = -10;
+        const errorS = new Tone.FMSynth({ harmonicity: 0.5, modulationIndex: 10, oscillator: { type: "sawtooth" }, envelope: { attack: 0.1, decay: 0.3, sustain: 0.1, release: 0.2 } }).toDestination();
+        errorS.volume.value = -14;
+        
+        const Sound = {
+            init: async () => { if (!audioReady) { await Tone.start(); audioReady = true; } },
+            click: () => { if(audioReady) blipS.triggerAttackRelease("C6", "32n"); },
+            pop: (p = "C5") => { if(audioReady) popS.triggerAttackRelease(p, "16n"); },
+            success: () => { if(audioReady) successS.triggerAttackRelease(["C4","E4","G4","C5"], "8n"); },
+            error: () => { if(audioReady) errorS.triggerAttackRelease("C2", "4n"); }
+        };
+        document.body.addEventListener('pointerdown', Sound.init, { once: true });
+
+        // --- DATA (Diperbanyak) ---
+        const FRUITS = [
+            { id:'F1', name:'Apel',      emoji:'🍎' },
+            { id:'F2', name:'Jeruk',     emoji:'🍊' },
+            { id:'F3', name:'Lemon',     emoji:'🍋' },
+            { id:'F4', name:'Anggur',    emoji:'🍇' },
+            { id:'F5', name:'Stroberi',  emoji:'🍓' },
+            { id:'F6', name:'Semangka',  emoji:'🍉' },
+            { id:'F7', name:'Pisang',    emoji:'🍌' },
+            { id:'F8', name:'Mangga',    emoji:'🥭' },
+            { id:'F9', name:'Nanas',     emoji:'🍍' },
+            { id:'F10',name:'Alpukat',   emoji:'🥑' },
+            { id:'F11',name:'Persik',    emoji:'🍑' },
+            { id:'F12',name:'Ceri',      emoji:'🍒' },
+            { id:'F13',name:'Kelapa',    emoji:'🥥' },
+            { id:'F14',name:'Kiwi',      emoji:'🥝' },
+            { id:'F15',name:'Bluberi',   emoji:'🫐' },
+            { id:'F16',name:'Melon',     emoji:'🍈' }
+        ];
+
+        const FEATURES = [
+            { id:'C1', label:'Merah',          emoji:'🔴' }, 
+            { id:'C2', label:'Oranye',         emoji:'🟠' },
+            { id:'C3', label:'Kuning',         emoji:'🟡' }, 
+            { id:'C4', label:'Hijau',          emoji:'🟢' },
+            { id:'C5', label:'Ungu/Biru',      emoji:'🟣' }, 
+            { id:'C6', label:'Cokelat',        emoji:'🟤' },
+            { id:'C7', label:'Bulat',          emoji:'⭕' }, 
+            { id:'C8', label:'Panjang/Lonjong',emoji:'🔷' },
+            { id:'C9', label:'Manis',          emoji:'🍬' }, 
+            { id:'C10',label:'Asam',           emoji:'🍋' },
+            { id:'C11',label:'Berair',         emoji:'💧' },
+            { id:'C12',label:'Berbiji Banyak', emoji:'🎇' },
+            { id:'C13',label:'Berbiji Tunggal',emoji:'⏺️' },
+            { id:'C14',label:'Kulit Kasar',    emoji:'🌵' },
+            { id:'C15',label:'Kulit Halus',    emoji:'🥎' }
+        ];
+
+        const getFruit = id => FRUITS.find(f=>f.id===id);
+        const getFeature = id => FEATURES.find(f=>f.id===id);
+
+        // --- STATE ---
+        let state = {
+            mode: 'train',
+            knowledge: {},
+            memCount: 0,
+            train: { fruit: null, features: [] },
+            test: { features: [], guess: null, correction: null }
+        };
+
+        // --- NAVIGATION ---
+        function switchMode(mode) {
+            Sound.click();
+            state.mode = mode;
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('nav-'+mode).classList.add('active');
+            
+            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+            document.getElementById('view-'+mode).classList.add('active');
+            
+            const robot = document.getElementById('main-robot');
+            const robotAction = document.getElementById('robot-action-wrapper');
+            
+            if(mode === 'train' || mode === 'test') { robot.classList.add('active'); } 
+            else { robot.classList.remove('active'); }
+
+            // Tombol "Simpan" hanya muncul di mode Train
+            if(mode !== 'train') {
+                robotAction.classList.remove('show');
+            } else {
+                syncTrainUI();
+            }
+
+            if (mode === 'train') initTrain();
+            if (mode === 'test') initTest();
+            if (mode === 'brain') updateBrain();
+        }
+
+        // --- ROBOT ANIMATION ---
+        const robotLid = document.getElementById('robot-lid');
+        const robotFace = document.getElementById('robot-face');
+        
+        function robotAnimate(action) {
+            if(action === 'open') robotLid.classList.add('open');
+            if(action === 'close') robotLid.classList.remove('open');
+            if(action === 'think') robotFace.className = 'robot-face robot-thinking';
+            if(action === 'happy') robotFace.className = 'robot-face robot-happy';
+            if(action === 'sad') robotFace.className = 'robot-face robot-sad';
+            if(action === 'normal') robotFace.className = 'robot-face';
+        }
+
+        // --- TRAIN VIEW ---
+        function initTrain() {
+            renderTrainFruits();
+            renderTrainFeatures();
+            syncTrainUI();
+        }
+
+        function createPolaroid(f, isSelected, onClick) {
+            const d = document.createElement('div');
+            d.className = `polaroid ${isSelected?'selected':''}`;
+            d.innerHTML = `
+                <div class="target-bracket tb-tl"></div><div class="target-bracket tb-tr"></div>
+                <div class="target-bracket tb-bl"></div><div class="target-bracket tb-br"></div>
+                <div class="polaroid-inner">${f.emoji}</div>
+                <div class="polaroid-title">${f.name}</div>
+            `;
+            d.onclick = onClick;
+            return d;
+        }
+
+        function renderTrainFruits() {
+            const g = document.getElementById('train-fruit-grid');
+            g.innerHTML = '';
+            FRUITS.forEach((f,i) => {
+                const card = createPolaroid(f, state.train.fruit === f.id, () => {
+                    state.train.fruit = f.id;
+                    Sound.pop("C4");
+                    renderTrainFruits();
+                    syncTrainUI();
+                });
+                g.appendChild(card);
+            });
+        }
+
+        function renderTrainFeatures() {
+            const g = document.getElementById('train-feature-grid');
+            g.innerHTML = '';
+            FEATURES.forEach((f,i) => {
+                const sel = state.train.features.includes(f.id);
+                const d = document.createElement('div');
+                d.className = `feature-chip ${sel?'selected':''}`;
+                d.innerHTML = `<span>${f.emoji}</span> ${f.label}`;
+                d.onclick = () => {
+                    Sound.pop("D5");
+                    const idx = state.train.features.indexOf(f.id);
+                    if (idx>-1) state.train.features.splice(idx,1);
+                    else state.train.features.push(f.id);
+                    renderTrainFeatures();
+                    syncTrainUI();
+                };
+                g.appendChild(d);
+            });
+        }
+
+        function syncTrainUI() {
+            const sec = document.getElementById('train-features-section');
+            const robotAction = document.getElementById('robot-action-wrapper');
+            
+            // Enable feature section if a fruit is selected
+            if (state.train.fruit) {
+                sec.classList.remove('opacity-50', 'pointer-events-none');
+            } else {
+                sec.classList.add('opacity-50', 'pointer-events-none');
+            }
+
+            // Show Train Button attached to the Robot
+            if (state.mode === 'train' && state.train.fruit && state.train.features.length > 0) {
+                robotAction.classList.add('show');
+            } else {
+                robotAction.classList.remove('show');
+            }
+        }
+
+        document.getElementById('btn-do-train').onclick = () => {
+            Sound.click();
+            robotAnimate('open');
+            
+            // Simpan data
+            if (!state.knowledge[state.train.fruit]) state.knowledge[state.train.fruit] = [];
+            state.knowledge[state.train.fruit].push([...state.train.features]);
+            
+            state.memCount++;
+            document.getElementById('mem-counter').textContent = state.memCount;
+
+            setTimeout(() => {
+                Sound.success();
+                robotAnimate('happy');
+                robotAnimate('close');
+            }, 600);
+
+            setTimeout(() => {
+                robotAnimate('normal');
+                state.train.fruit = null;
+                state.train.features = [];
+                initTrain();
+            }, 2000);
+        };
+
+        // --- TEST VIEW ---
+        function initTest() {
+            const hasData = state.memCount > 0;
+            document.getElementById('test-empty').classList.toggle('hidden', hasData);
+            document.getElementById('test-content').classList.toggle('hidden', !hasData);
+            document.getElementById('test-result').classList.add('hidden');
+            document.getElementById('correction-area').classList.add('hidden');
+            
+            if(hasData) renderTestFeatures();
+        }
+
+        function renderTestFeatures() {
+            const g = document.getElementById('test-feature-grid');
+            g.innerHTML = '';
+            FEATURES.forEach((f) => {
+                const sel = state.test.features.includes(f.id);
+                const d = document.createElement('div');
+                d.className = `feature-chip ${sel?'selected':''}`;
+                d.innerHTML = `<span>${f.emoji}</span> ${f.label}`;
+                d.onclick = () => {
+                    Sound.pop("E5");
+                    const idx = state.test.features.indexOf(f.id);
+                    if (idx>-1) state.test.features.splice(idx,1);
+                    else state.test.features.push(f.id);
+                    renderTestFeatures();
+                    document.getElementById('btn-do-test').disabled = state.test.features.length===0;
+                };
+                g.appendChild(d);
+            });
+        }
+
+        document.getElementById('btn-do-test').onclick = () => {
+            Sound.click();
+            document.getElementById('test-content').classList.add('hidden');
+            const res = document.getElementById('test-result');
+            res.classList.remove('hidden');
+            
+            document.getElementById('test-status-text').textContent = "AI Berpikir...";
+            document.getElementById('guess-emoji').textContent = "🤔";
+            document.getElementById('guess-name').textContent = "???";
+            document.getElementById('feedback-actions').style.display = 'none';
+
+            robotAnimate('think');
+            robotAnimate('open');
+
+            setTimeout(() => {
+                Sound.pop("C6");
+                robotAnimate('close');
+                robotAnimate('normal');
+                
+                // Algoritma tebak sederhana (Mencocokkan ciri-ciri)
+                let best=null, bestScore=-1;
+                for (const [id, exs] of Object.entries(state.knowledge)) {
+                    let total = 0;
+                    for (const ex of exs) {
+                        let m=0;
+                        for (const f of state.test.features) if (ex.includes(f)) m++;
+                        total += m;
+                    }
+                    if (total > bestScore) { bestScore=total; best=id; }
+                }
+                
+                if(!best || bestScore === 0) best = Object.keys(state.knowledge)[0];
+                state.test.guess = best;
+                
+                const f = getFruit(best);
+                document.getElementById('test-status-text').textContent = "Apakah ini buahnya?";
+                document.getElementById('guess-emoji').textContent = f.emoji;
+                document.getElementById('guess-name').textContent = f.name;
+                document.getElementById('feedback-actions').style.display = 'flex';
+                
+            }, 1500);
+        };
+
+        function handleFeedback(isCorrect) {
+            if(isCorrect) {
+                Sound.success();
+                robotAnimate('happy');
+                document.getElementById('test-status-text').textContent = "Hore! AI Benar!";
+                document.getElementById('feedback-actions').style.display = 'none';
+                setTimeout(() => { resetTest(); }, 2000);
+            } else {
+                Sound.error();
+                robotAnimate('sad');
+                document.getElementById('test-status-text').textContent = "Oops, AI Salah!";
+                document.getElementById('feedback-actions').style.display = 'none';
+                
+                const corr = document.getElementById('correction-area');
+                corr.classList.remove('hidden');
+                
+                const cg = document.getElementById('correction-fruit-grid');
+                cg.innerHTML = '';
+                FRUITS.forEach(f => {
+                    const card = createPolaroid(f, state.test.correction === f.id, () => {
+                        state.test.correction = f.id;
+                        Sound.pop("C4");
+                        Array.from(cg.children).forEach(c=>c.classList.remove('selected'));
+                        event.currentTarget.classList.add('selected');
+                        document.getElementById('btn-submit-correction').style.display = 'inline-block';
+                    });
+                    cg.appendChild(card);
+                });
+            }
+        }
+
+        function submitCorrection() {
+            if(!state.test.correction) return;
+            Sound.success();
+            robotAnimate('happy');
+            robotAnimate('open');
+            
+            if (!state.knowledge[state.test.correction]) state.knowledge[state.test.correction] = [];
+            state.knowledge[state.test.correction].push([...state.test.features]);
+            
+            state.memCount++;
+            document.getElementById('mem-counter').textContent = state.memCount;
+
+            setTimeout(() => {
+                robotAnimate('close');
+                resetTest();
+            }, 1000);
+        }
+
+        function resetTest() {
+            robotAnimate('normal');
+            state.test.features = [];
+            state.test.guess = null;
+            state.test.correction = null;
+            initTest();
+        }
+
+        // --- BRAIN VIEW ---
+        function updateBrain() {
+            const list = document.getElementById('knowledge-list');
+            const empty = document.getElementById('knowledge-empty');
+            list.innerHTML = '';
+            
+            const ids = Object.keys(state.knowledge);
+            if (ids.length === 0) { empty.classList.remove('hidden'); return; }
+            empty.classList.add('hidden');
+
+            ids.forEach(id => {
+                const f = getFruit(id);
+                const ex = state.knowledge[id].length;
+                const d = document.createElement('div');
+                d.className = "bg-white text-gray-800 p-4 rounded-lg shadow flex items-center gap-4";
+                d.innerHTML = `
+                    <div class="text-4xl bg-gray-100 w-16 h-16 rounded flex items-center justify-center">${f.emoji}</div>
+                    <div>
+                        <h4 class="font-bold text-xl">${f.name}</h4>
+                        <p class="text-sm text-gray-500">${ex} data tersimpan</p>
+                    </div>
+                `;
+                list.appendChild(d);
+            });
+        }
+
+        // --- UTILS ---
+        function resetAll() {
+            if(confirm("Hapus semua memori AI?")) {
+                state.knowledge = {};
+                state.memCount = 0;
+                document.getElementById('mem-counter').textContent = 0;
+                switchMode('train');
+            }
+        }
+
+        // INIT
+        window.onload = () => switchMode('train');
+    </script>
+</body>
+</html>
