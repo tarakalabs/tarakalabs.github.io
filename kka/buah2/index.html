@@ -1,0 +1,471 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>AI Lab • Belajar Buah | Floating UI</title>
+  <!-- Tailwind + Tone.js + Font -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: #0b1c2f;
+      background-image: radial-gradient(circle at 30% 40%, #1e4a6b20 0%, transparent 50%);
+      min-height: 100vh;
+      color: #f1f5f9;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+    }
+    .app-container {
+      max-width: 950px;
+      width: 100%;
+      padding: 1.2rem;
+      position: relative;
+      padding-bottom: 120px; /* ruang untuk floating element */
+    }
+    /* Polaroid Cards */
+    .polaroid {
+      background: white;
+      padding: 6px 6px 22px 6px;
+      border-radius: 6px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      width: 100px;
+      flex-shrink: 0;
+    }
+    .polaroid.selected {
+      transform: translateY(-6px);
+      box-shadow: 0 18px 25px rgba(45, 212, 191, 0.4);
+      outline: 3px solid #2dd4bf;
+    }
+    .polaroid-inner {
+      background: #1e293b;
+      width: 100%;
+      height: 88px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.8rem;
+      border-radius: 4px;
+    }
+    .polaroid-title {
+      position: absolute; bottom: 4px; left: 0; right: 0;
+      text-align: center; color: #1e293b; font-weight: 800; font-size: 0.65rem;
+      text-transform: uppercase;
+    }
+    /* Feature Chips */
+    .feature-chip {
+      background: rgba(255,255,255,0.08);
+      backdrop-filter: blur(10px);
+      border: 1.5px solid rgba(255,255,255,0.25);
+      color: #e2e8f0;
+      padding: 8px 18px;
+      border-radius: 40px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .feature-chip.selected {
+      background: #2dd4bf;
+      border-color: #2dd4bf;
+      color: #0f172a;
+      font-weight: 800;
+    }
+    /* Floating Robot & Button Container */
+    .floating-ai {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      transition: all 0.3s ease;
+    }
+    @media (max-width: 768px) {
+      .floating-ai {
+        right: auto;
+        left: 15px;
+        bottom: 15px;
+        transform: scale(0.85);
+      }
+      .app-container {
+        padding-bottom: 160px;
+      }
+    }
+    .robot-wrapper {
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(12px);
+      border-radius: 60px;
+      padding: 8px 10px 0 10px;
+      box-shadow: 0 15px 30px rgba(0,0,0,0.6);
+    }
+    .btn-save-float {
+      background: #facc15;
+      color: #0f172a;
+      font-weight: 800;
+      padding: 12px 24px;
+      border-radius: 40px;
+      border: none;
+      box-shadow: 0 6px 0 #b45309, 0 10px 20px rgba(0,0,0,0.4);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: 0.1s;
+      font-size: 0.95rem;
+    }
+    .btn-save-float:active {
+      transform: translateY(4px);
+      box-shadow: 0 2px 0 #b45309, 0 5px 10px rgba(0,0,0,0.4);
+    }
+    .btn-save-float:disabled {
+      opacity: 0.5;
+      pointer-events: none;
+      filter: grayscale(0.5);
+    }
+    /* Tabs */
+    .tab-btn {
+      background: transparent;
+      border: 2px solid rgba(255,255,255,0.2);
+      color: #cbd5e1;
+      padding: 8px 22px;
+      border-radius: 30px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .tab-btn.active {
+      background: white;
+      color: #0f172a;
+      border-color: white;
+    }
+  </style>
+</head>
+<body>
+<div class="app-container">
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-5">
+    <h1 class="text-2xl font-black text-cyan-300 tracking-tight">🧪 AI·LAB BUAH</h1>
+    <div class="flex gap-3 items-center">
+      <div class="bg-slate-800/80 px-4 py-2 rounded-full text-cyan-300 font-bold flex items-center gap-2">
+        <span>🧩</span> <span id="mem-counter">0</span>
+      </div>
+      <button onclick="resetAll()" class="bg-white/10 hover:bg-white/20 text-white p-2 rounded-full w-10 h-10" title="Reset">🗑️</button>
+    </div>
+  </div>
+
+  <!-- Navigasi Tab -->
+  <div class="flex justify-center gap-3 mb-8">
+    <button onclick="switchMode('train')" id="nav-train" class="tab-btn active">📚 Latih</button>
+    <button onclick="switchMode('test')" id="nav-test" class="tab-btn">🔍 Uji</button>
+    <button onclick="switchMode('brain')" id="nav-brain" class="tab-btn">🧠 Memori</button>
+  </div>
+
+  <!-- Konten Utama -->
+  <div class="w-full relative z-10">
+    <!-- TRAIN VIEW -->
+    <section id="view-train" class="view-section active">
+      <h2 class="text-2xl font-bold text-center mb-1">🍍 Pilih Buah</h2>
+      <p class="text-center text-cyan-200/70 text-sm mb-4">Ketuk kartu, lalu pilih ciri-cirinya.</p>
+      <div id="train-fruit-grid" class="flex gap-4 overflow-x-auto pb-3 justify-center flex-wrap"></div>
+      <div id="train-features-section" class="mt-6 opacity-50 pointer-events-none transition">
+        <h3 class="text-lg font-bold mb-3 text-center">✨ Ciri-ciri</h3>
+        <div id="train-feature-grid" class="flex flex-wrap gap-3 justify-center"></div>
+      </div>
+    </section>
+
+    <!-- TEST VIEW -->
+    <section id="view-test" class="view-section hidden">
+      <div id="test-empty" class="text-center py-16 hidden">
+        <span class="text-6xl">🤖💤</span>
+        <p class="mt-4">AI belum punya memori.</p>
+        <button onclick="switchMode('train')" class="bg-yellow-400 text-black font-bold px-6 py-3 rounded-full mt-4">Ke Latih AI</button>
+      </div>
+      <div id="test-content">
+        <h2 class="text-2xl font-bold text-center">🔎 Tanya AI</h2>
+        <div id="test-feature-grid" class="flex flex-wrap gap-3 justify-center my-6"></div>
+        <div class="text-center">
+          <button id="btn-do-test" class="bg-yellow-400 text-black font-bold px-6 py-3 rounded-full" disabled>Tebak Buah</button>
+        </div>
+      </div>
+      <div id="test-result" class="hidden mt-6 flex flex-col items-center">
+        <h3 id="test-status-text" class="text-xl font-bold mb-4">AI berpikir...</h3>
+        <div class="polaroid"><div class="polaroid-inner" id="guess-emoji">🤔</div><div class="polaroid-title" id="guess-name">???</div></div>
+        <div class="flex gap-3 mt-5" id="feedback-actions" style="display:none;">
+          <button onclick="handleFeedback(false)" class="bg-red-500 text-white px-5 py-2 rounded-full font-bold">❌ Bukan</button>
+          <button onclick="handleFeedback(true)" class="bg-emerald-500 text-white px-5 py-2 rounded-full font-bold">✅ Benar</button>
+        </div>
+        <div id="correction-area" class="hidden mt-6 text-center">
+          <p>Buah yang benar?</p>
+          <div id="correction-fruit-grid" class="flex gap-3 overflow-x-auto justify-center my-3"></div>
+          <button id="btn-submit-correction" class="bg-yellow-400 text-black font-bold px-5 py-2 rounded-full" style="display:none;" onclick="submitCorrection()">Simpan</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- BRAIN VIEW -->
+    <section id="view-brain" class="view-section hidden">
+      <h2 class="text-2xl font-bold mb-5 text-center">📋 Memori AI</h2>
+      <div id="knowledge-empty" class="text-center py-14 text-cyan-200/60">Belum ada data.</div>
+      <div id="knowledge-list" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+    </section>
+  </div>
+</div>
+
+<!-- FLOATING AI: ROBOT + TOMBOL SIMPAN -->
+<div class="floating-ai" id="floating-ai-container">
+  <div class="robot-wrapper">
+    <div class="relative flex flex-col items-center">
+      <div id="robot-lid" class="absolute -top-12 left-1 w-28 h-12 bg-white rounded-t-full origin-bottom-right transition-transform duration-500"></div>
+      <div class="bg-white w-32 h-24 rounded-2xl shadow-lg p-3 flex flex-col items-center relative">
+        <div id="robot-face" class="bg-slate-900 w-full h-12 rounded-xl flex items-center justify-center gap-3 relative">
+          <div class="robot-eye w-4 h-3 bg-cyan-400 rounded-t-full"></div>
+          <div id="robot-mouth" class="w-3 h-1.5 border-b-3 border-cyan-400 rounded-b-full absolute bottom-3"></div>
+          <div class="robot-eye w-4 h-3 bg-cyan-400 rounded-t-full"></div>
+        </div>
+        <span class="text-slate-500 font-black mt-1.5 text-xs tracking-widest">A.I.</span>
+      </div>
+      <div class="bg-cyan-400 w-16 h-4 rounded-b-full -mt-0.5"></div>
+    </div>
+  </div>
+  <button id="btn-do-train" class="btn-save-float" disabled>
+    <span>💾</span> Simpan ke AI
+  </button>
+</div>
+
+<script>
+  (function() {
+    // --- Audio Setup (Suara Success lebih jelas) ---
+    let audioReady = false;
+    const synth = new Tone.PolySynth(Tone.Synth).toDestination(); synth.volume.value = -12;
+    const blip = new Tone.Synth({ oscillator: { type: "sine" }, envelope: { attack: 0.01, decay: 0.1 } }).toDestination(); blip.volume.value = -18;
+    // Sukses: nada cerah naik
+    const successSynth = new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: "triangle" },
+      envelope: { attack: 0.02, decay: 0.3, sustain: 0.2, release: 0.4 }
+    }).toDestination();
+    successSynth.volume.value = -10;
+
+    const Sound = {
+      init: async () => { if(!audioReady) { await Tone.start(); audioReady = true; } },
+      click: () => { if(audioReady) blip.triggerAttackRelease("C6", "32n"); },
+      pop: () => { if(audioReady) synth.triggerAttackRelease("G4", "16n"); },
+      success: () => {
+        if(audioReady) {
+          successSynth.triggerAttackRelease(["C5","E5","G5","C6"], "8n");
+        }
+      },
+      error: () => { if(audioReady) synth.triggerAttackRelease("C#3", "8n"); }
+    };
+    document.body.addEventListener('pointerdown', Sound.init, { once: true });
+
+    // --- Data Diperbanyak ---
+    const FRUITS = [
+      { id:'F1', name:'Apel', emoji:'🍎' }, { id:'F2', name:'Jeruk', emoji:'🍊' }, { id:'F3', name:'Lemon', emoji:'🍋' },
+      { id:'F4', name:'Anggur', emoji:'🍇' }, { id:'F5', name:'Stroberi', emoji:'🍓' }, { id:'F6', name:'Semangka', emoji:'🍉' },
+      { id:'F7', name:'Pisang', emoji:'🍌' }, { id:'F8', name:'Mangga', emoji:'🥭' }, { id:'F9', name:'Nanas', emoji:'🍍' },
+      { id:'F10', name:'Alpukat', emoji:'🥑' }, { id:'F11', name:'Persik', emoji:'🍑' }, { id:'F12', name:'Ceri', emoji:'🍒' },
+      { id:'F13', name:'Kelapa', emoji:'🥥' }, { id:'F14', name:'Kiwi', emoji:'🥝' }, { id:'F15', name:'Bluberi', emoji:'🫐' },
+      { id:'F16', name:'Melon', emoji:'🍈' }, { id:'F17', name:'Pir', emoji:'🍐' }, { id:'F18', name:'Delima', emoji:'🍑' },
+      { id:'F19', name:'Markisa', emoji:'🍈' }, { id:'F20', name:'Rambutan', emoji:'🍒' }
+    ];
+    const FEATURES = [
+      { id:'C1', label:'Merah', emoji:'🔴' }, { id:'C2', label:'Oranye', emoji:'🟠' }, { id:'C3', label:'Kuning', emoji:'🟡' },
+      { id:'C4', label:'Hijau', emoji:'🟢' }, { id:'C5', label:'Ungu', emoji:'🟣' }, { id:'C6', label:'Cokelat', emoji:'🟤' },
+      { id:'C7', label:'Bulat', emoji:'⭕' }, { id:'C8', label:'Panjang', emoji:'🥖' }, { id:'C9', label:'Manis', emoji:'🍬' },
+      { id:'C10', label:'Asam', emoji:'🍋' }, { id:'C11', label:'Berair', emoji:'💧' }, { id:'C12', label:'Berbiji banyak', emoji:'✨' },
+      { id:'C13', label:'Biji tunggal', emoji:'🥚' }, { id:'C14', label:'Kulit kasar', emoji:'🌵' }, { id:'C15', label:'Kulit halus', emoji:'🎈' },
+      { id:'C16', label:'Tropis', emoji:'🌴' }, { id:'C17', label:'Kecil', emoji:'🐜' }, { id:'C18', label:'Besar', emoji:'🐘' }
+    ];
+
+    const state = {
+      mode: 'train',
+      knowledge: {},
+      memCount: 0,
+      train: { fruit: null, features: [] },
+      test: { features: [], guess: null, correction: null }
+    };
+
+    // Robot animation
+    const robotLid = document.getElementById('robot-lid');
+    const robotMouth = document.getElementById('robot-mouth');
+    function robotAnim(action) {
+      robotLid.classList.toggle('open', action==='open');
+      if(action==='think') robotMouth.className = 'w-3 h-1.5 border-b-2 border-cyan-400 rounded-b-full absolute bottom-3 animate-pulse';
+      else if(action==='happy') robotMouth.className = 'w-4 h-2 border-b-4 border-cyan-400 rounded-b-full absolute bottom-3';
+      else if(action==='sad') robotMouth.className = 'w-4 h-2 border-t-4 border-cyan-400 rounded-t-full absolute bottom-4';
+      else robotMouth.className = 'w-3 h-1.5 border-b-3 border-cyan-400 rounded-b-full absolute bottom-3';
+    }
+
+    function createPolaroid(fruit, selected, onClick) {
+      const d = document.createElement('div');
+      d.className = `polaroid ${selected?'selected':''}`;
+      d.innerHTML = `<div class="polaroid-inner">${fruit.emoji}</div><div class="polaroid-title">${fruit.name}</div>`;
+      d.onclick = onClick;
+      return d;
+    }
+
+    function switchMode(mode) {
+      state.mode = mode;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(`nav-${mode}`).classList.add('active');
+      document.querySelectorAll('.view-section').forEach(s => s.classList.add('hidden'));
+      document.getElementById(`view-${mode}`).classList.remove('hidden');
+      document.getElementById('floating-ai-container').style.display = (mode==='train'||mode==='test') ? 'flex' : 'none';
+      if(mode==='train') initTrain();
+      else if(mode==='test') initTest();
+      else if(mode==='brain') updateBrain();
+      robotAnim('normal');
+    }
+
+    function initTrain() {
+      const grid = document.getElementById('train-fruit-grid');
+      grid.innerHTML = '';
+      FRUITS.forEach(f => grid.appendChild(createPolaroid(f, state.train.fruit===f.id, ()=>{
+        state.train.fruit = f.id; Sound.pop(); initTrain(); syncTrainUI();
+      })));
+      renderTrainFeatures();
+      syncTrainUI();
+    }
+
+    function renderTrainFeatures() {
+      const grid = document.getElementById('train-feature-grid');
+      grid.innerHTML = '';
+      FEATURES.forEach(f => {
+        const sel = state.train.features.includes(f.id);
+        const chip = document.createElement('div');
+        chip.className = `feature-chip ${sel?'selected':''}`;
+        chip.innerHTML = `${f.emoji} ${f.label}`;
+        chip.onclick = () => {
+          const idx = state.train.features.indexOf(f.id);
+          if(idx>-1) state.train.features.splice(idx,1); else state.train.features.push(f.id);
+          Sound.click(); renderTrainFeatures(); syncTrainUI();
+        };
+        grid.appendChild(chip);
+      });
+    }
+
+    function syncTrainUI() {
+      const sec = document.getElementById('train-features-section');
+      const btn = document.getElementById('btn-do-train');
+      if(state.train.fruit) sec.classList.remove('opacity-50','pointer-events-none');
+      else sec.classList.add('opacity-50','pointer-events-none');
+      btn.disabled = !(state.train.fruit && state.train.features.length > 0);
+    }
+
+    document.getElementById('btn-do-train').onclick = () => {
+      if(!state.train.fruit || !state.train.features.length) return;
+      robotAnim('open');
+      if(!state.knowledge[state.train.fruit]) state.knowledge[state.train.fruit] = [];
+      state.knowledge[state.train.fruit].push([...state.train.features]);
+      state.memCount++; document.getElementById('mem-counter').textContent = state.memCount;
+      Sound.success(); // 🔊 Suara sukses
+      setTimeout(() => { robotAnim('happy'); }, 400);
+      setTimeout(() => {
+        state.train.fruit = null; state.train.features = [];
+        initTrain(); robotAnim('normal');
+      }, 1300);
+    };
+
+    function initTest() {
+      const has = state.memCount > 0;
+      document.getElementById('test-empty').classList.toggle('hidden', has);
+      document.getElementById('test-content').classList.toggle('hidden', !has);
+      document.getElementById('test-result').classList.add('hidden');
+      if(has) {
+        const g = document.getElementById('test-feature-grid'); g.innerHTML = '';
+        FEATURES.forEach(f => {
+          const chip = document.createElement('div');
+          chip.className = `feature-chip ${state.test.features.includes(f.id)?'selected':''}`;
+          chip.innerHTML = `${f.emoji} ${f.label}`;
+          chip.onclick = ()=>{
+            const i = state.test.features.indexOf(f.id);
+            if(i>-1) state.test.features.splice(i,1); else state.test.features.push(f.id);
+            Sound.click(); initTest();
+            document.getElementById('btn-do-test').disabled = state.test.features.length===0;
+          };
+          g.appendChild(chip);
+        });
+      }
+    }
+
+    document.getElementById('btn-do-test').onclick = () => {
+      robotAnim('think'); robotAnim('open');
+      document.getElementById('test-content').classList.add('hidden');
+      document.getElementById('test-result').classList.remove('hidden');
+      setTimeout(() => {
+        let best=null, bestScore=-1;
+        for(const [id, exs] of Object.entries(state.knowledge)) {
+          let total=0; exs.forEach(ex=>{ state.test.features.forEach(f=>{ if(ex.includes(f)) total++; }); });
+          if(total>bestScore){ bestScore=total; best=id; }
+        }
+        state.test.guess = best || Object.keys(state.knowledge)[0];
+        const f = FRUITS.find(f=>f.id===state.test.guess);
+        document.getElementById('guess-emoji').textContent = f.emoji;
+        document.getElementById('guess-name').textContent = f.name;
+        document.getElementById('feedback-actions').style.display='flex';
+        robotAnim('close'); robotAnim('normal');
+      }, 1200);
+    };
+
+    window.handleFeedback = (correct) => {
+      if(correct) { Sound.success(); robotAnim('happy'); resetTest(); }
+      else {
+        Sound.error(); robotAnim('sad');
+        document.getElementById('feedback-actions').style.display='none';
+        const area = document.getElementById('correction-area'); area.classList.remove('hidden');
+        const grid = document.getElementById('correction-fruit-grid'); grid.innerHTML='';
+        FRUITS.forEach(f=> grid.appendChild(createPolaroid(f, state.test.correction===f.id, ()=>{
+          state.test.correction = f.id; document.getElementById('btn-submit-correction').style.display='inline-block';
+        })));
+      }
+    };
+
+    window.submitCorrection = () => {
+      if(!state.test.correction) return;
+      if(!state.knowledge[state.test.correction]) state.knowledge[state.test.correction]=[];
+      state.knowledge[state.test.correction].push([...state.test.features]);
+      state.memCount++; document.getElementById('mem-counter').textContent=state.memCount;
+      Sound.success(); robotAnim('happy'); resetTest();
+    };
+
+    function resetTest() {
+      state.test = { features:[], guess:null, correction:null };
+      document.getElementById('test-result').classList.add('hidden');
+      initTest(); robotAnim('normal');
+    }
+
+    function updateBrain() {
+      const list = document.getElementById('knowledge-list');
+      const empty = document.getElementById('knowledge-empty');
+      list.innerHTML = '';
+      const ids = Object.keys(state.knowledge);
+      if(!ids.length) { empty.classList.remove('hidden'); return; }
+      empty.classList.add('hidden');
+      ids.forEach(id=>{
+        const f = FRUITS.find(f=>f.id===id);
+        const card = document.createElement('div');
+        card.className = 'bg-white/10 backdrop-blur p-4 rounded-xl flex items-center gap-4';
+        card.innerHTML = `<span class="text-4xl">${f.emoji}</span><div><h4 class="font-bold">${f.name}</h4><p class="text-cyan-200 text-sm">${state.knowledge[id].length} contoh</p></div>`;
+        list.appendChild(card);
+      });
+    }
+
+    window.resetAll = ()=> { if(confirm('Hapus semua memori?')) { state.knowledge={}; state.memCount=0; document.getElementById('mem-counter').textContent=0; switchMode('train'); } };
+    window.switchMode = switchMode;
+    window.onload = ()=> switchMode('train');
+  })();
+</script>
+</body>
+</html>
